@@ -175,3 +175,207 @@ avg_total_fat
 ggplot(data = avg_total_fat) +
 geom_bar(mapping = aes(x=restaurant, y = avg_total_fat),stat = "identity")
 ```
+
+
+### Part 1: formatting RMarkdown document
+---
+title: "Assignment2"
+author: "Astha Dholakiya s4644484"
+date: "9/04/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Libraries
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(skimr)
+library(ggplot2)
+```
+
+
+
+### Part 2: Data Wrangling and visualization
+
+```{r}
+#Importing data
+buser_df<-read.csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-11-20/thanksgiving_meals.csv")
+```
+
+1.  Displaying the first 10 rows of the dataset using `kable()` function. 
+
+```{r}
+kable(head(buser_df,10))
+```
+
+
+2. Using `skim()` to display the summary of variables
+
+```{r}
+skim(buser_df)
+```
+
+
+Making Predictions from the data
+
+
+3.Use `fct_reorder` and `parse_number` functions to create a factor variable `family_income`
+
+```{r}
+x<-parse_number(buser_df$family_income)
+f<-factor(buser_df$family_income)
+xy<-fct_reorder(f,x,min)
+family_income<-as.numeric(xy)
+head(family_income)
+```
+
+
+4. What is the number of people who celebrate? 
+
+```{r}
+table(buser_df$celebrate)
+```
+The number of peaople who celebrate is 980. 
+
+
+
+5. What are categories and insights for each main dish served and the method it is prepared? 
+
+
+```{r}
+unique(buser_df$main_dish)
+```
+```{r}
+unique(buser_df$main_prep)
+```
+Response:
+
+
+
+6. Create 3 different data viz showing insights for main dish served and the method. Provide your own legend and use themes.
+Write 2-3 sentences with your explanation of each insight. (4 marks)
+
+```{r}
+ggplot(data=buser_df, aes(x=main_dish),size=6)+ 
+  stat_count()
+```
+
+```{r}
+ggplot(data = buser_df) +
+stat_count(mapping = aes(x = main_prep))
+```
+
+
+```{r}
+ggplot(data = buser_df) +
+stat_count(mapping = aes(x = as.factor(main_dish)))+
+facet_wrap(~ main_prep, nrow = 2)
+```
+
+
+
+7. How many use cranberry sauce? How many use gravy? 2marks
+
+
+```{r}
+table(buser_df$gravy)
+```
+
+8. What is the distribution of those who celebrate across income ranges. Create a data viz.
+
+
+```{r}
+ggplot(data = buser_df) +
+stat_count(mapping = aes(x = family_income))+
+facet_wrap(~ celebrate, nrow = 2)
+```
+
+9. Write 2-3 sentences with your explanation of each insight
+
+10. Use the following code to create a new data set.
+
+```{r}
+new_df<-buser_df%>%
+select(id, starts_with("side"),
+         starts_with("pie"),
+         starts_with("dessert")) %>%
+  select(-side15, -pie13, -dessert12) %>%
+  gather(type, value, -id) %>%
+  filter(!is.na(value),
+         !value %in% c("None", "Other (please specify)")) %>%
+  mutate(type = str_remove(type, "\\d+"))
+head(new_df)
+```
+
+Write 2-3 sentences with your explanation of what it does. (4 marks)
+
+11. Intall package `widyr` and use `pairwise_cor()` function https://www.rdocumentation.org/packages/widyr/versions/0.1.3/topics/pairwise_cor
+Write 2-3 sentences with your explanation of what it does. (2 marks)
+
+```{r}
+#install.packages("widyr")
+```
+
+Use this code for the new dataset
+
+```{r}
+library(widyr)
+new_df%>%
+pairwise_cor(value,id, sort = TRUE)
+```
+
+Write 1 sentence with your explanation of what insights it shows. (2 marks)
+
+13. Use `lm()` function to build a model that predict a family income based on data in the dataset.
+
+Compare 3 models using different set of input variables. Use different number of variables.
+
+Explain your choice of variables (3 sentences) 
+
+Write 2 sentences explaining which model os best.
+
+
+```{r}
+#Creating the regression dataset
+y<-family_income
+x1=as.numeric(factor(buser_df$us_region))
+x2<-as.numeric(factor(buser_df$community_type))
+x3<-as.numeric(factor(buser_df$main_dish))
+x4<-as.numeric(factor(buser_df$age))
+reg_df<-data.frame(y,x1,x2,x3,x4)
+names(reg_df)<-c("family_income","region","community_type",
+                 "main_dish","age")
+reg_df[is.na(reg_df)]=0
+```
+
+
+
+```{r}
+#Model 1: A simple Linear regression model for predicting family income based on region
+model_1<-lm(family_income~region,data=reg_df)
+summary(model_1)
+```
+
+
+```{r}
+#Model 2: A multiple Linear regression for predicting family income based on region and community type
+model_2<-lm(family_income~region+community_type,data=reg_df)
+summary(model_2)
+```
+
+
+```{r}
+#Model 3: A multiple Linear regression for predicting family income based on region, main dish, age, and community type
+model_3<-lm(family_income~.,data=reg_df)
+summary(model_3)
+```
+
+Comment:
+model 3 performs better.
