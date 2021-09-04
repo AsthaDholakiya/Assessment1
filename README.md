@@ -177,7 +177,12 @@ geom_bar(mapping = aes(x=restaurant, y = avg_total_fat),stat = "identity")
 ```
 
 
-### Part 1: formatting RMarkdown document
+
+
+### Assesement 2
+
+
+
 ---
 title: "Assignment2"
 author: "Astha Dholakiya s4644484"
